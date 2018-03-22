@@ -1,49 +1,152 @@
 const {
   BaseKonnector,
+  log,
   requestFactory,
-  saveFiles,
-  addData
+  saveFiles
 } = require('cozy-konnector-libs')
-const request = requestFactory({ cheerio: true })
+const groupBy = require('lodash.groupby')
+const map = require('lodash.map')
 
-const baseUrl = 'http://books.toscrape.com'
+const request = requestFactory({
+  cheerio: true,
+  // debug: true,
+  jar: true,
+  json: false
+})
 
-module.exports = new BaseKonnector(start)
+const baseUrl = 'http://www.pajemploi.urssaf.fr/pajeweb'
+const loginUrl = baseUrl + '/j_spring_security_check'
+const logoutUrl = baseUrl + '/j_spring_security_logout'
+const listUrl = baseUrl + '/ajaxlistebs.jsp'
+const downloadUrl = baseUrl + '/paje_bulletinsalaire.pdf'
 
-// The start function is run by the BaseKonnector instance only when it got all the account
-// information (fields). When you run this connector yourself in "standalone" mode or "dev" mode,
-// the account information come from ./konnector-dev-config.json file
-function start(fields) {
-  // The BaseKonnector instance expects a Promise as return of the function
-  return request(`${baseUrl}/index.html`).then($ => {
-    // cheerio (https://cheerio.js.org/) uses the same api as jQuery (http://jquery.com/)
-    // here I do an Array.from to convert the cheerio fake array to a real js array.
-    const entries = Array.from($('article')).map(article =>
-      parseArticle($, article)
-    )
-    return addData(entries, 'com.toscrape.books').then(() =>
-      saveFiles(entries, fields)
-    )
+module.exports = new BaseKonnector(function fetch(fields) {
+  return authenticate(fields.login, fields.password)
+    .then(fetchPayslips)
+    .then(fetchPayslipFiles)
+    .catch(err => {
+      log('error', err.message)
+      this.terminate('UNKNOWN_ERROR')
+    })
+})
+
+function authenticate(login, password) {
+  log('info', 'Authenticating...')
+  return request({
+    method: 'POST',
+    uri: loginUrl,
+    form: {
+      j_username: login,
+      j_password: password,
+      j_passwordfake: password
+    }
+  }).then($ => {
+    if (pageContainsLoginForm($)) {
+      log('error', 'Login form still visible: login failed.')
+      throw new Error('LOGIN_FAILED')
+    } else if (pageContainsLogoutLink($)) {
+      log('info', 'Logout link found: login successful.')
+    } else {
+      log('warn', 'Cannot find login form or logout link: where am I?')
+    }
   })
 }
 
-// The goal of this function is to parse a html page wrapped by a cheerio instance // and return an array of js objects which will be saved to the cozy by addData (https://github.com/cozy/cozy-konnector-libs/blob/master/docs/api.md#module_addData)
-// and saveFiles (https://github.com/cozy/cozy-konnector-libs/blob/master/docs/api.md#savefiles)
-function parseArticle($, article) {
-  const $article = $(article)
-  const title = $article.find('h3 a').attr('title')
+function pageContainsLoginForm($) {
+  return $('input#j_username').length > 0
+}
+function pageContainsLogoutLink($) {
+  return $(`a[href="${logoutUrl}"]`)
+}
+
+function fetchPayslips() {
+  const today = new Date()
+  const startYear = '2004' // Pajemploi exists since 2004
+  const startMonth = '01'
+  const endYear = today.getFullYear().toString()
+  const endMonth = `0${today.getMonth() + 1}`.slice(-2)
+
+  log(
+    'info',
+    'Looking for payslips between ' +
+      `${startMonth}/${startYear} and ${endMonth}/${endYear}...`
+  )
+
+  return request({
+    method: 'POST',
+    uri: listUrl,
+    form: {
+      activite: 'T',
+      byAsc: 'false',
+      dtDebAnnee: startYear,
+      dtDebMois: startMonth,
+      dtFinAnnee: endYear,
+      dtFinMois: endMonth,
+      noIntSala: '',
+      order: 'periode',
+      paye: 'false'
+    }
+  })
+    .then(parsePayslipList)
+    .then(payslips => {
+      if (payslips.length > 0) {
+        log('info', `Found ${payslips.length} payslips.`)
+      } else {
+        log('warn', 'No payslips found.')
+      }
+      return groupBy(payslips, 'employee')
+    })
+}
+
+function parsePayslipList($) {
+  log('info', 'Parsing payslip list...')
+  return Array.from($('#tabVsTous tr[onclick]')).map(tr =>
+    parsePayslipRow($(tr))
+  )
+}
+
+const jsCodeRegExp = /^document\.getElementById\('ref'\)\.value='([^']+)';document\.getElementById\('norng'\)\.value='([^']+)';document\.formBulletinSalaire\.submit\(\);$/
+
+function parsePayslipRow($tr) {
+  const [month, year] = $tr
+    .find('td:nth-child(1)')
+    .text()
+    .split('/')
+  const employee = $tr.find('td:nth-child(2)').text()
+  const amount = $tr
+    .find('td:nth-child(3)')
+    .text()
+    .trim()
+  const [ref, norng] = jsCodeRegExp.exec($tr.attr('onclick')).slice(1, 3)
   return {
-    title,
-    price: normalizePrice($article.find('.price_color').text()),
-    url: `${baseUrl}/${$article.find('h3 a').attr('href')}`,
-    // when it finds a fileurl attribute, saveFiles will save this file to the cozy with a filename
-    // name
-    fileurl: `${baseUrl}/${$article.find('img').attr('src')}`,
-    filename: `${title}.jpg`
+    period: `${year}-${month}`,
+    employee,
+    amount,
+    ref,
+    norng
   }
 }
 
-// convert a price string to a float
-function normalizePrice(price) {
-  return parseFloat(price.trim().replace('£', ''))
+function fetchPayslipFiles(payslipsByEmployee) {
+  return Promise.all(
+    map(payslipsByEmployee, (payslips, employee) => {
+      const files = payslips.map(fileEntry)
+      const folderPath = employee
+      return saveFiles(files, folderPath)
+    })
+  )
+}
+
+function fileEntry({ period, ref, norng }) {
+  return {
+    fileurl: downloadUrl,
+    filename: `${period}.pdf`,
+    requestOptions: {
+      method: 'POST',
+      formData: {
+        ref,
+        norng
+      }
+    }
+  }
 }

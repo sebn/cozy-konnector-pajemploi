@@ -34,7 +34,9 @@
     "deploy:prod": "git-directory-deploy --directory build/ --branch latest --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/cozy-konnector-template.git}"
   },
   "dependencies": {
-    "cozy-konnector-libs": "3.5.3"
+    "cozy-konnector-libs": "3.5.3",
+    "lodash.groupby": "^4.6.0",
+    "lodash.map": "^4.6.0"
   },
   "devDependencies": {
     "copy-webpack-plugin": "4.5.1",
