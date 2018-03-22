@@ -105,13 +105,12 @@ function parsePayslipList($) {
   )
 }
 
+// Download form is filled up and submitted from JavaScript
 const jsCodeRegExp = /^document\.getElementById\('ref'\)\.value='([^']+)';document\.getElementById\('norng'\)\.value='([^']+)';document\.formBulletinSalaire\.submit\(\);$/
 
 function parsePayslipRow($tr) {
-  const [month, year] = $tr
-    .find('td:nth-child(1)')
-    .text()
-    .split('/')
+  const periodString = $tr.find('td:nth-child(1)').text()
+  const [year, month] = parsePeriod(periodString)
   const employee = $tr.find('td:nth-child(2)').text()
   const amount = $tr
     .find('td:nth-child(3)')
@@ -125,6 +124,17 @@ function parsePayslipRow($tr) {
     ref,
     norng
   }
+}
+
+// For some reason, first date is formatted like "2018-01-01 00:00:00.0", while
+// subsequent ones look like "01/2018".
+const frDateRegExp = /\s*(\d{2})\/(\d{4}).*/
+const isoDateRegExp = /\s*(\d{4})-(\d{2}).*/
+
+function parsePeriod(dateString) {
+  const frDateMatch = frDateRegExp.exec(dateString)
+  if (frDateMatch) return frDateMatch.slice(1, 3).reverse()
+  else return isoDateRegExp.exec(dateString).slice(1, 3)
 }
 
 function fetchPayslipFiles(payslipsByEmployee) {
