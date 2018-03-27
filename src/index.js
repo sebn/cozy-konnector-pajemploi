@@ -2,7 +2,8 @@ const {
   BaseKonnector,
   log,
   requestFactory,
-  saveFiles
+  saveFiles,
+  cozyClient
 } = require('cozy-konnector-libs')
 const groupBy = require('lodash.groupby')
 const map = require('lodash.map')
@@ -137,12 +138,13 @@ function parsePeriod(dateString) {
   else return isoDateRegExp.exec(dateString).slice(1, 3)
 }
 
-function fetchPayslipFiles(payslipsByEmployee) {
+function fetchPayslipFiles(payslipsByEmployee, folderPath) {
   return Promise.all(
     map(payslipsByEmployee, (payslips, employee) => {
       const files = payslips.map(fileEntry)
-      const folderPath = employee
-      return saveFiles(files, folderPath)
+      return mkdirp(folderPath, employee).then(() =>
+        saveFiles(files, `${folderPath}/${employee}`)
+      )
     })
   )
 }
@@ -159,4 +161,17 @@ function fileEntry({ period, ref, norng }) {
       }
     }
   }
+}
+
+// create a folder if it does not already exist
+function mkdirp(path, folderName) {
+  return cozyClient.files.statByPath(`${path}/${folderName}`).catch(err => {
+    log('info', err.message, `${path} folder does not exist yet, creating it`)
+    return cozyClient.files.statByPath(`${path}`).then(parentFolder =>
+      cozyClient.files.createDirectory({
+        name: folderName,
+        dirID: parentFolder._id
+      })
+    )
+  })
 }
