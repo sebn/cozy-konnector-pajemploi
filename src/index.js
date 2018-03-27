@@ -24,11 +24,9 @@ const downloadUrl = baseUrl + '/paje_bulletinsalaire.pdf'
 module.exports = new BaseKonnector(function fetch(fields) {
   return authenticate(fields.login, fields.password)
     .then(fetchPayslips)
-    .then(fetchPayslipFiles)
-    .catch(err => {
-      log('error', err.message)
-      this.terminate('UNKNOWN_ERROR')
-    })
+    .then(payslipsByEmployee =>
+      fetchPayslipFiles(payslipsByEmployee, fields.folderPath)
+    )
 })
 
 function authenticate(login, password) {
