@@ -1,23 +1,43 @@
 {
   "version": "1.0.0",
-  "name": "konnector name",
-  "type": "node",
-  "slug": "konnectorslug",
-  "description": "description",
-  "source": "git://github.com/konnectors/cozy-konnector-thename.git",
+  "name": "Pajemploi",
+  "slug": "pajemploi-collect",
+  "type": "konnector",
+  "language": "node",
+  "icon": "icon.gif",
+  "source": "git://github.com/konnectors/cozy-konnector-pajemploi.git",
+  "editor": "Cozy",
+  "vendorLink": "http://www.pajemploi.urssaf.fr/pajewebinfo/cms/sites/pajewebinfo/accueil.html",
+  "developer": {
+    "name": "Sébastien Nicouleau",
+    "url": ""
+  },
+  "categories": ["public_service"],
+  "screenshots": ["screenshots/screenshot.png"],
+  "langs": ["fr"],
+  "dataType": [
+    "document"
+  ],
+  "fields": {
+    "login": {
+      "type": "text"
+    },
+    "password": {
+      "type": "password"
+    },
+    "advancedFields": {
+      "folderPath": {
+        "advanced": true,
+        "isRequired": false
+      }
+    }
+  },
   "locales": {
     "fr": {
-      "permissions": {
-        "books": {
-          "description": "Utilisé pour sauvegarder les références de vos livres"
-        },
-        "files": {
-          "description": "Utilisé pour sauvegarder les couvertures de vos livres"
-        },
-        "accounts": {
-          "description": "Utilisé pour récupérer les informations de votre compte"
-        }
-      }
+      "short_description": "Récupérer vos documents Pajemploi"
+    },
+    "en": {
+      "short_description": "Fetch your Pajemploi documents"
     }
   },
   "permissions": {
@@ -34,9 +54,5 @@
       "type": "io.cozy.accounts",
       "verbs": ["GET"]
     }
-  },
-  "developer": {
-    "name": "cozy",
-    "url": "cozy.io"
   }
 }
