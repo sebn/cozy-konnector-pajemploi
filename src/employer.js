@@ -3,10 +3,10 @@ const groupBy = require('lodash.groupby')
 const map = require('lodash.map')
 
 const { mkdirp } = require('./cozyhelpers')
-const { baseUrl, request } = require('./request')
+const { request } = require('./request')
 
-const listUrl = baseUrl + '/ajaxlistebs.jsp'
-const downloadUrl = baseUrl + '/paje_bulletinsalaire.pdf'
+const listUrl = '/ajaxlistebs.jsp'
+const downloadUrl = '/paje_bulletinsalaire.pdf'
 
 module.exports = {
   fetchPayslips,

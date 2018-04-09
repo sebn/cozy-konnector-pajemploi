@@ -1,10 +1,10 @@
 // Common code for both employers and childminders
 
-const { baseUrl, request } = require('./request')
+const { request } = require('./request')
 const { log } = require('cozy-konnector-libs')
 
-const loginUrl = baseUrl + '/j_spring_security_check'
-const logoutUrl = baseUrl + '/j_spring_security_logout'
+const loginUrl = '/j_spring_security_check'
+const logoutUrl = '/j_spring_security_logout'
 
 module.exports = {
   authenticate
@@ -36,5 +36,5 @@ function pageContainsLoginForm($) {
   return $('input#j_username').length > 0
 }
 function pageContainsLogoutLink($) {
-  return $(`a[href="${logoutUrl}"]`)
+  return $(`a[href$="${logoutUrl}"]`)
 }
