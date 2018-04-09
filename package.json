@@ -25,6 +25,7 @@
     "build": "webpack",
     "precommit": "yarn lint",
     "lint": "eslint . --fix",
+    "test": "jest",
     "deploy": "git-directory-deploy --directory build/ --branch build --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/cozy-konnector-pajemploi.git}",
     "deploy:prod": "git-directory-deploy --directory build/ --branch latest --repo=${DEPLOY_REPOSITORY:-https://$GITHUB_TOKEN@github.com/konnectors/cozy-konnector-pajemploi.git}"
   },
