@@ -1,5 +1,5 @@
-[Cozy][cozy] <YOUR SUPER NEW KONNECTOR NAME>
-=======================================
+[Cozy][cozy] Pajemploi
+======================
 
 What's Cozy?
 ------------
@@ -8,10 +8,21 @@ What's Cozy?
 
 [Cozy] is a platform that brings all your web services in the same private space. With it, your webapps and your devices can share data easily, providing you with a new experience. You can install Cozy on your own hardware where no one's tracking you.
 
-What's this new konnector?
---------------------------
+What's this konnector?
+----------------------
 
-<YOUR DESCRIPTION HERE>
+This konnector gets information from [Pajemploi][pajemploi], a service provided
+by the French [URSSAF][urssaf] to childminders and people employing them.
+
+What data is imported?
+----------------------
+
+For employers, the konnector imports the payslips of their childminder(s).
+
+In the future, it should also:
+- import the payslips for childminders
+- import relevant metadata to allow the Banks application to link bank
+  operations to the payslips.
 
 ### Open a Pull-Request
 
@@ -23,7 +34,7 @@ This connector uses [cozy-konnector-libs](https://github.com/cozy/cozy-konnector
 
 ### Maintainer
 
-The lead maintainers for this konnector is <YOUR NAME>
+The lead maintainer for this konnector is @sebn
 
 
 ### Get in touch
@@ -39,9 +50,11 @@ You can reach the Cozy Community by:
 License
 -------
 
-<YOUR KONNECTOR NAME> is developed by <your name> and distributed under the [AGPL v3 license][agpl-3.0].
+Pajemploi konnector is developed by sebn and distributed under the [AGPL v3 license][agpl-3.0].
 
 [cozy]: https://cozy.io "Cozy Cloud"
+[pajemploi]: http://www.pajemploi.urssaf.fr
+[urssaf]: https://en.wikipedia.org/wiki/URSSAF
 [agpl-3.0]: https://www.gnu.org/licenses/agpl-3.0.html
 [freenode]: http://webchat.freenode.net/?randomnick=1&channels=%23cozycloud&uio=d4
 [forum]: https://forum.cozy.io/
