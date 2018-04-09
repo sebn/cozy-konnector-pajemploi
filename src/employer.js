@@ -10,7 +10,8 @@ const downloadUrl = baseUrl + '/paje_bulletinsalaire.pdf'
 
 module.exports = {
   fetchPayslips,
-  fetchPayslipFiles
+  fetchPayslipFiles,
+  parsePeriod
 }
 
 function fetchPayslips() {
